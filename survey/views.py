@@ -10,37 +10,41 @@ from survey.models import Question, Respondent, Answer
 
 def _get_answer_counts():
     res = []
-    for q in Question.objects.all():
+    for q, question in enumerate(Question.objects.all()):
 
         choice_counts = []
 
-        if not q.rows:
+        if not question.rows:
             columns = [""]
             answer_rows = [0]
         else:
-            columns = json.loads(q.rows)
-            answer_rows = Answer.objects.filter(question=q).values_list('answer_row', flat=True).distinct()
+            columns = json.loads(question.rows)
+            answer_rows = Answer.objects.filter(question=question).values_list('answer_row', flat=True).distinct()
 
         # Only show those answers which have more than one response.
         for (row, subq) in zip(answer_rows, columns):
             counts = Answer.objects.filter(
-                    question=q,
+                    question=question,
                     answer_row=row
                 ).values('answer').annotate(
                     answer_count=Count('answer')
                 ).filter(answer_count__gt=1)
 
-            subq_counts = []
+            choices = []
             for count in counts:
-                subq_counts.append([count['answer'], count['answer_count']])
-            choice_counts.append([subq, subq_counts])
+                choices.append(count['answer'])
+            choice_counts.append({
+                'label': subq,
+                'choices': choices
+            })
 
         res.append({
-            '_id': q.id,
-            'index': q.index,
-            'widget': q.widget,
-            'question': q.question,
-            'choices': choice_counts,
+            '_id': question.pk, # The django model index
+            'index': q, # The row index, starting from 0
+            'number': question.index, # The survey's question number.
+            'widget': question.widget,
+            'question': question.question,
+            'subquestions': choice_counts,
         })
     return res
 
@@ -65,12 +69,10 @@ def answers_json(request):
         response = []
         for question in counts:
             subq_answers = []
-            for answer_row in range(len(question['choices'])):
-                allowed_answers = [
-                    w for w, c in question['choices'][answer_row][1]
-                ]
+            for subq in range(len(question['subquestions'])):
+                allowed_answers = question['subquestions'][subq]['choices']
                 try:
-                    answer = answer_index[question['_id']][respondent.id][answer_row]
+                    answer = answer_index[question['_id']][respondent.id][subq]
                     subq_answers.append(allowed_answers.index(answer.answer))
                 except (KeyError, ValueError):
                     subq_answers.append(-1)

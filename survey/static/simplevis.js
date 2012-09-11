@@ -2,6 +2,7 @@
 var questions = null;
 var data = null;
 var constraints = {};
+var counts = {};
 $.ajax({
   url: '/questions.json',
   type: 'GET',
@@ -39,11 +40,12 @@ function sortCopy(array) {
   return copy;
 }
 
-function renderChoice(choice, count, q_index, subq_index, answer_index) {
+function renderChoice(choice, q_index, subq_index, answer_index) {
   var el = $("<span class='choice'></span>");
   var choiceDisp = choice.replace(/\u0092/g, "'");
 
   var chosen = constraints[q_index] != null && constraints[q_index][subq_index] === answer_index;
+  var count = counts[q_index][subq_index][answer_index];
 
   el.append(
     $("<a href='#' class='" + (chosen ? 'chosen' : '') + "'>" + (choiceDisp || "(blank)") + "</a>").click(function() {
@@ -68,31 +70,23 @@ function renderInlineCategory(text) {
 }
 
 function renderChoiceList(question, dest) {
-  // Are we a "+ Other" question?
-  var choice, subq, i, j, k;
-  if (question.choices.length == 1) {
-    // This is a simple question with no subquestion and no "Other".
-    for (i = 0; i < question.choices[0][1].length; i++) {
-      choice = question.choices[0][1][i];
-      dest.append(renderChoice(choice[0], choice[1], question.index, 0, i));
-    }
-  } else if (question.choices.length > 1) {
-    // This is a "choose all that apply" from a constrained list with or
-    // without an "Other".
-    for (var i = 0; i < question.choices.length ; i++) {
-      subq = question.choices[i];
-      if (subq[1].length === 1 && subq[1][0][0] === "Yes") {
-        dest.append(renderChoice(subq[0], subq[1][0][1], question.index, i, 0));
-      } else {
-        dest.append(renderInlineCategory(subq[0]));
-        for (var j = 0; j < subq[1].length; j++) {
-          dest.append(renderChoice(subq[1][j][0], subq[1][j][1], question.index, i, j));
-        }
+  var subq_label, subq_choices, i, j;
+  for (i = 0; i < question.subquestions.length; i++) {
+    subq_label = question.subquestions[i].label;
+    subq_choices = question.subquestions[i].choices;
+    if (subq_choices.length === 1 && subq_choices[0] === "Yes") {
+      // If the subq's choices are only "Yes", regard the subq label as the
+      // 'choice' rather than as a subq.
+      dest.append(renderChoice(subq_label, question.index, i, 0));
+    } else {
+      // Only show subq labels if there's more than one subq.
+      if (question.subquestions.length > 1) {
+        dest.append(renderInlineCategory(subq_label));
+      }
+      for (j = 0; j < subq_choices.length; j++) {
+        dest.append(renderChoice(subq_choices[j], question.index, i, j));
       }
     }
-  } else {
-    console.error("How to handle this question? Ack!")
-    console.log(question);
   }
 }
 function renderMatrix(question, dest) {
@@ -107,20 +101,50 @@ function renderBarChart(question, dest) {
 function renderPie(question, dest) {
   renderChoiceList(question, dest);
 }
+function checkConstraints(data_row) {
+  var q_index, subq_index;
+  for (q_index in constraints) {
+    for (subq_index in constraints[q_index]) {
+      if (data_row[q_index][subq_index] !== constraints[q_index][subq_index]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
 function render() {
   // Update counts
-  var counts = {};
   var total = 0;
   // build scaffold
+  counts = {};
   for (var i=0; i < questions.length; i++) {
+    // Question...
     counts[i] = {};
-    for (var j=0; j < questions[i].choices.length; j++) {
-      counts[i][j] = 0;
+    for (var j=0; j < questions[i].subquestions.length; j++) {
+      // Subquestion...
+      counts[i][j] = {}
+      for (var k = 0; k < questions[i].subquestions[j].choices.length; k++) {
+        // Choice.
+        counts[i][j][k] = 0;
+      }
     }
   }
   // count given constraints.
-  //TODO
- 
+  for (var r = 0; r < data.length; r++) {
+    var row = data[r];
+    if (checkConstraints(row)) {
+      total += 1;
+      for (var q=0; q < row.length; q++) {
+        var question = row[q];
+        for (var s=0; s < question.length; s++) {
+          var subquestion_answer = question[s];
+          if (subquestion_answer !== -1) {
+            counts[q][s][subquestion_answer] += 1;
+          }
+        }
+      }
+    }
+  }
 
   // Render facets
   $("#total .count").html(total);
@@ -148,28 +172,31 @@ function render() {
 
   // Render constraints
   $("#constraints").html("");
-  for (var question in constraints) {
-    (function(question) {
-      var parts = question.split("::");
-      var q = parts[0];
-      if (parts.length > 1) {
-        var subq = parts[1];
-      }
-      var cdiv = $("<div class='constraint'></div>");
-      if (parts.length > 1) {
-        cdiv.append($("<span class='q'>" + questions[q].question + ": " + subq + ": </span>"));
-      } else {
-        cdiv.append($("<span class='q'>" + questions[q].question + ":</span>"));
-      }
-      cdiv.append($("<span class='a'>" + constraints[question] + "</span>"))
-      cdiv.append(
-        $("<a href='#'>(remove)</a>").click(function() {
-        delete constraints[question];
-        render();
-        return false;
-      })
-      );
-      $("#constraints").append(cdiv);
-    })(question);
+  for (var q in constraints) {
+    for (var subq in constraints[q]) {
+      (function(q, subq) {
+        var cdiv = $("<div class='constraint'></div>");
+        var cdiv_contents = ["<span class='q'>", questions[q].question, ": "];
+        if (questions[q].subquestions.length > 1) {
+
+          cdiv_contents.push(questions[q].subquestions[subq].label);
+          cdiv_contents.push(": ");
+        }
+        cdiv_contents.push("</span>");
+        cdiv.append(cdiv_contents.join(""));
+
+        cdiv.append($("<span class='a'>" +
+                      questions[q].subquestions[subq].choices[ constraints[q][subq] ] +
+                      "</span>"));
+        cdiv.append(
+          $("<a href='#'>(remove)</a>").click(function() {
+            delete constraints[q][subq];
+            render();
+            return false;
+          })
+        );
+        $("#constraints").append(cdiv);
+      })(q, subq);
+    }
   }
 }
