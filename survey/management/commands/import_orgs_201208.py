@@ -328,7 +328,8 @@ def clean_answer(q_col, val):
         val = {'0': "I plant o vote"}.get(val.strip(), val)
 
     if q_col.startswith("q0034"):
-        val = "0" * (5 - len(val)) + val
+        if val not in ("999", "9999"):
+            val = "0" * (5 - len(val)) + val
 
     return {
             "": "",

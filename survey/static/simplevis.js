@@ -111,12 +111,16 @@ function render() {
   // Update counts
   var counts = {};
   var total = 0;
+  // build scaffold
   for (var i=0; i < questions.length; i++) {
     counts[i] = {};
     for (var j=0; j < questions[i].choices.length; j++) {
-      counts[i][j] = questions[i].choices[j][1];
+      counts[i][j] = 0;
     }
   }
+  // count given constraints.
+  //TODO
+ 
 
   // Render facets
   $("#total .count").html(total);
