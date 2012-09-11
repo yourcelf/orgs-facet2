@@ -163,7 +163,7 @@ function render() {
       case 'pie': renderPie(question, adiv); break;
       default:
         console.error("Unknown widget: " + question.widget);
-      console.log(question);
+        console.log(question);
     }
 
     qdiv.append(adiv);
@@ -172,8 +172,13 @@ function render() {
 
   // Render constraints
   $("#constraints").html("");
+  var constraintsFound = false;
   for (var q in constraints) {
     for (var subq in constraints[q]) {
+      if (!constraintsFound) {
+        constraintsFound = true;
+        $("#constraints").append("<b>Constraints</b><br/>")
+      }
       (function(q, subq) {
         var cdiv = $("<div class='constraint'></div>");
         var cdiv_contents = ["<span class='q'>", questions[q].question, ": "];
