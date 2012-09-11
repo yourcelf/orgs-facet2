@@ -1,0 +1,34 @@
+from django.db import models
+from django.db.models import Count
+
+class Respondent(models.Model):
+    row_num = models.IntegerField(default=0)
+
+    def __unicode__(self):
+        return "Row %s" % self.row_num
+
+class Question(models.Model):
+    question = models.TextField()
+    index = models.IntegerField(unique=True)
+    rows = models.TextField(
+            help_text="JSON Array of question rows, if any.",
+            blank=True)
+    widget = models.CharField(max_length=20)
+
+    class Meta:
+        ordering = ['index']
+
+    def __unicode__(self):
+        return self.question
+
+class Answer(models.Model):
+    respondent = models.ForeignKey(Respondent)
+    question = models.ForeignKey(Question)
+    answer = models.TextField(blank=True)
+    answer_row = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['question', 'answer_row']
+
+    def __unicode__(self):
+        return self.answer
