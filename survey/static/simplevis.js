@@ -6,7 +6,7 @@ var constraints = {};
 var counts = {};
 var totalResponseCount = 0;
 $.ajax({
-  url: '/questions.json',
+  url: '../questions.json',
   type: 'GET',
   success: function(res) {
     questions = res;
@@ -21,7 +21,7 @@ $.ajax({
   }
 });
 $.ajax({
-  url: '/answers.json',
+  url: '../answers.json',
   type: 'GET',
   success: function(res) {
     data = res;
@@ -36,7 +36,7 @@ $.ajax({
   }
 });
 $.ajax({
-  url: '/geocodes.json',
+  url: '../geocodes.json',
   type: 'GET',
   success: function(res) {
     geocodes = res;
@@ -307,6 +307,7 @@ function clearConstraint(q_index, subq_index) {
 }
 function render() {
   // Update counts
+  $(".tooltip").remove();
   $("#total .count").html("<img src='static/img/spinner.gif' alt='loading' />");
   setTimeout(_render, 1);
 }
