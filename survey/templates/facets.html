@@ -5,11 +5,7 @@
         <link rel="stylesheet" type="text/css" href="/static/lib/bootstrap/css/bootstrap.min.css" />
         <link rel="stylesheet" type="text/css" href="/static/lib/bootstrap/css/bootstrap-responsive.min.css" />
         <style type='text/css'>
-          @media (min-width: 768px) {
-            .total-container {
-              position: fixed;
-            }
-          }
+          @media (min-width: 768px) { .total-container { position: fixed; } }
           .total-container {
             background-color: #333;
             color: white;
@@ -24,6 +20,9 @@
           }
           .zero, a.zero {
             color: #aaa;
+          }
+          span.choice {
+            white-space: nowrap;
           }
           a.chosen {
             font-weight: bold;
@@ -44,7 +43,28 @@
             font-size: 120%;
             display: block;
           }
-
+          .barchart {
+            width: 100%;
+            padding: 1em;
+          }
+          .bar-holder {
+            border: 1px solid #eee;
+            height: 2em;
+            width: 100%;
+            position: relative;
+          }
+          .bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: #dfd;
+            height: 2em;
+          }
+          .bar-label {
+            padding: 0.5em;
+            position: relative;
+            text-shadow: 0px 0px 1px white;
+          }
         </style>
     </head>
     <body>
@@ -74,7 +94,7 @@
     <script type='text/javascript' src='http://code.jquery.com/jquery-1.7.2.min.js'></script>
     <script type='text/javascript' src='/static/lib/raphael-min.js'></script>
     <script type='text/javascript' src='/static/lib/g.raphael-min.js'></script>
-    <script type='text/javascript' src='/static/lib/g.bar-min.js'></script>
     <script type='text/javascript' src='/static/lib/g.pie-min.js'></script>
+    <script type='text/javascript' src='/static/lib/bootstrap/js/bootstrap.min.js'></script>
     <script type='text/javascript' src='/static/simplevis.js'></script>
 </html>

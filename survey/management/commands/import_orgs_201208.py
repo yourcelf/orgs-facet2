@@ -100,7 +100,7 @@ column_maps = {
         ],
     },
     'q0015': {
-        'question': "These are some sources that you might or might not use for news and information about the Occupy movement.  Please indicate whether you used these sources for news and information about hte Occupy movement.",
+        'question': "These are some sources that you might or might not use for news and information about the Occupy movement.  Please indicate whether you used these sources for news and information about the Occupy movement.",
         'widget': 'matrix',
         'rows': [
             'Word of mouth',
@@ -317,6 +317,9 @@ def clean_answer(q_col, val):
 
     if q_col.startswith("q0023"):
         val = {'0': "Other"}.get(val.strip(), val)
+
+    if q_col.startswith("q0026"):
+        val = {"1": "Yes", "2": "No"}.get(val.strip(), val)
 
     if q_col.startswith("q0031"):
         val = {'0': "I associate with a party"}.get(val.strip(), val)

@@ -6,7 +6,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.db.models import Count
 
-from survey.models import Question, Respondent, Answer
+from survey.models import Question, Respondent, Answer, Geocode
 
 def _get_answer_counts():
     res = []
@@ -79,6 +79,20 @@ def answers_json(request):
             response.append(subq_answers)
         responses.append(response)
     response = HttpResponse(json.dumps(responses, separators=(',',':')))
+    response['Content-type'] = "application/json"
+    return response
+
+# Cache basically forever.  10 years.
+@cache_page(60 * 60 * 24 * 365 * 10)
+def geocodes_json(request):
+    mapping = {}
+    for geo in Geocode.objects.all():
+        mapping[geo.term] = {
+            'lat': geo.lat,
+            'lng': geo.lng,
+            'state': geo.state,
+        }
+    response = HttpResponse(json.dumps(mapping, separators=(',',':')))
     response['Content-type'] = "application/json"
     return response
 

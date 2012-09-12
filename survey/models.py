@@ -32,3 +32,12 @@ class Answer(models.Model):
 
     def __unicode__(self):
         return self.answer
+
+class Geocode(models.Model):
+    term = models.CharField(max_length=50)
+    lat = models.FloatField()
+    lng = models.FloatField()
+    state = models.CharField(max_length=2, blank=True)
+
+    def __unicode__(self):
+        return self.term

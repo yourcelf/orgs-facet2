@@ -160,3 +160,4 @@ CACHES = {
         'LOCATION': 'unique-snowflake'
     }
 }
+CLOUDMADE_API_KEY = "4963e0f7ff0642129df7b0fb6c9d4c1f"

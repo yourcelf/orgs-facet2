@@ -1,14 +1,16 @@
 // vim: set ts=2 sw=2 :
 var questions = null;
 var data = null;
+var geocodes = null;
 var constraints = {};
 var counts = {};
+var totalResponseCount = 0;
 $.ajax({
   url: '/questions.json',
   type: 'GET',
   success: function(res) {
     questions = res;
-    if (questions && data) {
+    if (questions && data && geocodes) {
       render();
     }
   },
@@ -23,7 +25,22 @@ $.ajax({
   type: 'GET',
   success: function(res) {
     data = res;
-    if (questions && data) {
+    if (questions && data && geocodes) {
+      render();
+    }
+  },
+  error: function() {
+    if (confirm("Error loading page.  Refresh?")) {
+      window.reload();
+    }
+  }
+});
+$.ajax({
+  url: '/geocodes.json',
+  type: 'GET',
+  success: function(res) {
+    geocodes = res;
+    if (questions && data && geocodes) {
       render();
     }
   },
@@ -40,12 +57,22 @@ function sortCopy(array) {
   return copy;
 }
 
+function choiceId(q_index, subq_index, answer_index) {
+  return "a" + q_index + "_" + subq_index + "_" + answer_index;
+}
 function renderChoice(choice, q_index, subq_index, answer_index) {
   var el = $("<span class='choice'></span>");
   var choiceDisp = choice.replace(/\u0092/g, "'");
 
   var chosen = constraints[q_index] != null && constraints[q_index][subq_index] === answer_index;
   var count = counts[q_index][subq_index][answer_index];
+
+  el.attr({
+    id: choiceId(q_index, subq_index, answer_index),
+    "data-title": parseInt(100 * count / totalResponseCount) + "% of matched responses",
+    "data-placement": "bottom"
+  });
+  el.tooltip();
 
   el.append(
     $("<a href='#' class='" + (chosen ? 'chosen' : '') + "'>" + (choiceDisp || "(blank)") + "</a>").click(function() {
@@ -58,7 +85,6 @@ function renderChoice(choice, q_index, subq_index, answer_index) {
   }).addClass(count == 0 ? 'zero' : '')
   );
   el.append("<span class='count" + (count == 0 ? ' zero' : '') + "'>(" + count + ")</span>");
-  el.append(" ");
   return el;
 }
 function renderInlineCategory(text) {
@@ -74,13 +100,16 @@ function renderChoiceList(question, dest) {
       // If the subq's choices are only "Yes", regard the subq label as the
       // 'choice' rather than as a subq.
       dest.append(renderChoice(subq_label, question.index, i, 0));
+      dest.append(" ");
     } else {
       // Only show subq labels if there's more than one subq.
       if (question.subquestions.length > 1) {
         dest.append(renderInlineCategory(subq_label));
+        dest.append(" ");
       }
       for (j = 0; j < subq_choices.length; j++) {
         dest.append(renderChoice(subq_choices[j], question.index, i, j));
+        dest.append(" ");
       }
     }
   }
@@ -89,42 +118,112 @@ function renderMatrix(question, dest) {
   renderChoiceList(question, dest);
 }
 function renderGeo(question, dest) {
+  // HACK: only using first subquestion.  Get counts by value.
   renderChoiceList(question, dest);
+  /*
+  var geocounts = {};
+  var chart_id = "q" + question.index + "_chart";
+  for (var i = 0; i < question.subquestions[0].choices.length; i++) {
+    geocounts[ question.subquestions[0].choices[i] ] = {
+      'count': counts[question.index][0][i],
+      'indexes': [question.index, 0, i]
+    }
+  }
+
+  var container = $("<div/>");
+  var iframe = $("<iframe style='border: none;' src='static/img/Blank_US_Map.svg' width='960px' height='600px' id='" + chart_id + "'></iframe>");
+  container.append(iframe);
+  dest.append(container);
+  var map = document.getElementById(chart_id).contentWindow.document;
+
+  var state_data = {};
+  var non_state_data = {};
+  for (var term in geocounts) {
+    if (geocodes[term] && geocodes[term].state) {
+      state_data[term] = geocounts[term];
+      state_data[term].state = geocodes[term].state;
+    } else {
+      non_state_data[term] = geocounts[term];
+    }
+  }
+  var max = 0;
+  var min = 0;
+  for (var term in state_data) {
+    if (state_data[term].count > max) {
+      max = state_data[term].count;
+    }
+  }
+  console.log(min, max, state_data);
+  function colorize(val) {
+    var scale = parseInt(Math.floor((val - min) / (max - min) * 200 + 50));
+    return "rgb(0, " + scale + ", 0)";
+  }
+
+  for (var term in state_data) {
+    (function(term) {
+      var state = state_data[term].state;
+      var count = state_data[term].count;
+      $("#" + state + ", #" + state + " path", map).css(
+        "fill", colorize(count)
+      );
+    })(term);
+  }
+  */
 }
 function renderBarChart(question, dest) {
   var values = [];
   var labels = [];
   var indexes= [];
+  var valLabelIndex = [];
   if (question.subquestions.length == 1) {
     for (var i = 0; i < question.subquestions[0].choices.length; i++) {
-      labels.push(question.subquestions[0].choices[i]);
-      values.push(counts[question.index][0][i]);
-      indexes.push([question.index, 0, i]);
+      valLabelIndex.push([
+        counts[question.index][0][i], // value
+        question.subquestions[0].choices[i], // label
+        [question.index, 0, i] // indexes
+      ]);
     }
   } else {
     for (var i = 0; i < question.subquestions.length; i++) {
       for (var j = 0; j < question.subquestions[i].choices.length; j++) {
-        values.push(counts[question.index][i][j]);
-        indexes.push([question.index, i, j])
+        var label;
         if (question.subquestions[i].choices[j] === "Yes") {
-          labels.push(question.subquestions[i].label);
+          label = question.subquestions[i].label;
         } else {
-          labels.push(question.subquestions[i].choices[j]);
+          label = question.subquestions[i].choices[j];
         }
+        valLabelIndex.push([
+          counts[question.index][i][j], // value
+          label,
+          [question.index, i, j] // indexes
+        ]);
       }
     }
   }
-  var id = "q" + question.index;
-  var container = $("<div>").attr("id", id);
-  dest.append(container);
-  var r = Raphael(id);
-  var bar = r.hbarchart(100, 50, 300, 220, values);
-  bar.label([labels]);
-//  bar.hover(function() {
-//    this.flag = r.popup(this.bar.x, this.bar.y, this.bar.value || "0").insertBefore(this);
-//  }, function() {
-//    this.flag.remove();
-//  });
+  valLabelIndex.sort(function(a, b) {
+    // Sort by label: second argument.
+    if (a[1] < b[1]) { 
+      return -1;
+    } else if (a[1] > b[1]) {
+      return 1;
+    }
+    return 0;
+  });
+  var chart = $("<div class='barchart'></div>");
+  for (var i = 0; i < valLabelIndex.length; i++) {
+    var value = valLabelIndex[i][0];
+    var label = valLabelIndex[i][1];
+    var indexes = valLabelIndex[i][2];
+    var barHolder = $("<div class='bar-holder'></div>");
+    var bar = $("<div class='bar'></div>");
+    var barLabel = $("<div class='bar-label'></div>");
+    bar.css("width", ((value / totalResponseCount) * 100) + "%");
+    barLabel.append(renderChoice(label, indexes[0], indexes[1], indexes[2]));
+    barHolder.append(bar);
+    barHolder.append(barLabel);
+    chart.append(barHolder);
+  }
+  dest.append(chart);
 }
 function renderPie(question, dest) {
   for (var i = 0; i < question.subquestions.length; i++) {
@@ -134,7 +233,7 @@ function renderPie(question, dest) {
   }
   for (var i = 0; i < question.subquestions.length; i++) {
     (function(subq_index) {
-      var id = "q" + question.index + "_" + subq_index;
+      var id = "q" + question.index + "_" + subq_index + "_plot";
       var container = $("<div style='max-height: 264px;'>").attr("id", id);
       var values = [];
       var labels = []
@@ -189,6 +288,18 @@ function setConstraint(q_index, subq_index, value) {
   }
   constraints[q_index][subq_index] = value;
   render();
+  setTimeout(function() {
+    var el = document.getElementById(choiceId(q_index, subq_index, value));
+    if (el) {
+      el.scrollIntoView();
+    } else {
+      el = document.getElementById("q" + q_index);
+      if (el) {
+        el.scrollIntoView();
+      }
+    }
+  }, 100);
+
 }
 function clearConstraint(q_index, subq_index) {
   delete constraints[q_index][subq_index];
@@ -196,7 +307,11 @@ function clearConstraint(q_index, subq_index) {
 }
 function render() {
   // Update counts
-  var total = 0;
+  $("#total .count").html("<img src='static/img/spinner.gif' alt='loading' />");
+  setTimeout(_render, 1);
+}
+function _render() {
+  totalResponseCount = 0;
   // build scaffold
   counts = {};
   for (var i=0; i < questions.length; i++) {
@@ -215,7 +330,7 @@ function render() {
   for (var r = 0; r < data.length; r++) {
     var row = data[r];
     if (checkConstraints(row)) {
-      total += 1;
+      totalResponseCount += 1;
       for (var q=0; q < row.length; q++) {
         var question = row[q];
         for (var s=0; s < question.length; s++) {
@@ -229,12 +344,12 @@ function render() {
   }
 
   // Render facets
-  $("#total .count").html(total);
+  $("#total .count").html(totalResponseCount);
   $("#questions").html("");
   for (var i = 0; i < questions.length; i++) {
     var question = questions[i];
     var qdiv = $("<div class='question'></div>");
-    qdiv.append("<h2>" + question.question + "</h2>");
+    qdiv.append("<h2 id='q" + question.index + "'>" + question.question + "</h2>");
     var adiv = $("<div class='answers'></div>");
     qdiv.append(adiv);
     $("#questions").append(qdiv);
