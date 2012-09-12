@@ -3,37 +3,26 @@ import time
 import signal
 import subprocess
 from fabric.api import *
-"""
-This is a simple build script to deploy this app as a static html site.
 
-To use: 
-    1. Install fabric: http://fabfile.org
-    2. With node 0.6.x and all dependencies all set up, run:
+BASE = os.path.dirname(os.path.abspath(__file__)).rstrip("/")
+BUILD_DIR = os.path.join(BASE, "_build")
 
-        $ fab deploy -H example.com
-
-    ... where example.com is the destination server.  This will place the files
-    in the directory /sites/time.byconsens.us/.  To change this, run:
-
-        $ fab deploy:dest="/var/www/somedir" -H example.com
-
-    Set the username for the remote server with "--user", defaults to your
-    current logged in username.
-
-The script operates by starting node in production mode, spidering the site
-with wget, and deploying with rsync.  As a bonus, it builds an appcache
-manifest file for offline use.
-"""
-
-BUILD_DIR = os.path.join(os.path.dirname(__file__), "_build")
+def init():
+    local("python manage.py syncdb --noinput")
+    local("python manage.py reset survey --noinput")
+    local("python manage.py loaddata %s/survey/fixtures/usstates.json" % BASE)
+    local("python manage.py import_orgs_201208 %s/data/OccupySurvey8.28.csv" % BASE)
 
 def build():
     # Spider the site.
+    """
+    Start the dev server on port 8000 (default), and then run this.
+    """
     with settings(warn_only=True):
         local("rm -r \"%s\"" % BUILD_DIR)
     local("mkdir -p %s" % BUILD_DIR)
     with lcd(BUILD_DIR):
-        local("wget -nH --mirror --page-requisites http://localhost:8000 http://localhost:8000/questions.json http://localhost:8000/answers.json http://localhost:8000/geocodes.json")
+        local("wget -nH --mirror --page-requisites http://localhost:8000 http://localhost:8000/questions.json http://localhost:8000/answers.json localhost:8000/static/img/Blank_US_Map.svg")
 
 
 def deploy(dest='/sites/orgs-facet2.tirl.org/'):

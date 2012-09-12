@@ -41,3 +41,10 @@ class Geocode(models.Model):
 
     def __unicode__(self):
         return self.term
+
+class USState(models.Model):
+    term = models.CharField(max_length=50)
+    state = models.CharField(max_length=2, blank=True)
+
+    class Meta:
+        unique_together = (('term', 'state'),)

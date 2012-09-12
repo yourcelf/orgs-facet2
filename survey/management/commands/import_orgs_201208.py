@@ -36,7 +36,7 @@ column_maps = {
             "Attended a General Assembly",
             "Taken part in a Working Group",
             "Volunteered to provide food or services to people at the camp",
-            "Participated in workshops or events hosted at teh camp",
+            "Participated in workshops or events hosted at the camp",
             "Marched in a protest",
             "Organized an event or action",
             "Got arrested",

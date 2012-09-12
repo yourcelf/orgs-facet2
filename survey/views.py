@@ -6,12 +6,12 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.db.models import Count
 
-from survey.models import Question, Respondent, Answer, Geocode
+from survey.models import Question, Respondent, Answer, USState
 
 def _get_states():
     geo_states = {}
-    for geocode in Geocode.objects.all():
-        geo_states[geocode.term] = geocode.state
+    for stateobj in USState.objects.all():
+        geo_states[stateobj.term] = stateobj.state
     return geo_states
 
 def _get_question_choices():
@@ -34,12 +34,18 @@ def _get_question_choices():
         # all subquestions.
         if question.widget == "geo":
             geo_counts = defaultdict(int)
-            answers = Answer.objects.filter(question=question)
-            for answer in answers:
-                state = geo_states.get(answer.answer, answer.answer) 
-                if not state:
-                    state = answer.answer
-                geo_counts[state] += 1
+            respondents = set()
+            for (subq, label) in zip(subquestions, columns):
+                answers = Answer.objects.filter(question=question, subquestion=subq)
+                for answer in answers:
+                    state = geo_states.get(answer.answer, answer.answer) 
+                    if not state:
+                        state = answer.answer
+                    # Only take one response from each respondent...
+                    if answer.respondent_id not in respondents:
+                        geo_counts[state] += 1
+                    respondents.add(answer.respondent_id)
+
             choices = [{
                 "label": "",
                 "choices": [k for (k,v) in geo_counts.items() if v > 1],
@@ -126,20 +132,6 @@ def answers_json(request):
     json_text = json.dumps(responses, separators=(',',':'))
     #json_text = json.dumps(responses, indent=1)
     response = HttpResponse(json_text)
-    response['Content-type'] = "application/json"
-    return response
-
-# Cache basically forever.  10 years.
-@cache_page(60 * 60 * 24 * 365 * 10)
-def geocodes_json(request):
-    mapping = {}
-    for geo in Geocode.objects.all():
-        mapping[geo.term] = {
-            'lat': geo.lat,
-            'lng': geo.lng,
-            'state': geo.state,
-        }
-    response = HttpResponse(json.dumps(mapping, separators=(',',':')))
     response['Content-type'] = "application/json"
     return response
 

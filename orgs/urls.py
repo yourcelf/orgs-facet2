@@ -9,6 +9,5 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url('questions.json', 'survey.views.questions_json'),
     url('answers.json', 'survey.views.answers_json'),
-    url('geocodes.json', 'survey.views.geocodes_json'),
     url('^$', 'survey.views.facets'),
 )

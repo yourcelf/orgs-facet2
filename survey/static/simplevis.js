@@ -37,12 +37,6 @@ $.ajax({
   }
 });
 
-function sortCopy(array) {
-  var copy = array.slice();
-  copy.sort();
-  return copy;
-}
-
 function choiceId(q_index, subq_index, answer_index) {
   return "a" + q_index + "_" + subq_index + "_" + answer_index;
 }
@@ -78,25 +72,42 @@ function renderInlineCategory(text) {
 }
 
 function renderChoiceList(question, dest) {
-  var subq_label, subq_choices, i, j;
+  var subq_label, subq_choices, responses, i, j, count, part;
+  var sections = [{parts: []}];
   for (i = 0; i < question.subquestions.length; i++) {
     subq_label = question.subquestions[i].label;
     subq_choices = question.subquestions[i].choices;
+    var section = sections[sections.length - 1];
     if (subq_choices.length === 1 && subq_choices[0] === "Yes") {
       // If the subq's choices are only "Yes", regard the subq label as the
       // 'choice' rather than as a subq.
-      dest.append(renderChoice(subq_label, question.index, i, 0));
-      dest.append(" ");
+      count = counts[question.index][i][0];
+      section.parts.push([subq_label, count, question.index, i, 0]);
     } else {
       // Only show subq labels if there's more than one subq.
       if (question.subquestions.length > 1) {
-        dest.append(renderInlineCategory(subq_label));
+        section.label = subq_label;
         dest.append(" ");
       }
       for (j = 0; j < subq_choices.length; j++) {
-        dest.append(renderChoice(subq_choices[j], question.index, i, j));
-        dest.append(" ");
+        count = counts[question.index][i][j];
+        section.parts.push([subq_choices[j], count, question.index, i, j])
       }
+      sections.push({parts: []});
+    }
+  }
+  for (i = 0; i < sections.length; i++) {
+    sections[i].parts.sort(function(a, b) {
+      return a[1] > b[1] ? (-1) : b[1] > a[1] ? 1 : 0;
+    });
+    if (sections[i].label) {
+        dest.append(renderInlineCategory(sections[i].label));
+        dest.append(" ");
+    }
+    for (j = 0; j < sections[i].parts.length; j++) {
+      part = sections[i].parts[j];
+      dest.append(renderChoice(part[0], part[2], part[3], part[4]));
+      dest.append(" ");
     }
   }
 }
@@ -125,10 +136,9 @@ function renderGeo(question, dest) {
       non_state_data.push(data);
     }
   }
-  var sortByCount = function(a, b) {
+  non_state_data.sort(function(a, b) {
     return a.count > b.count ? (-1) : b.count > a.count ? 1 : 0;
-  }
-  non_state_data.sort(sortByCount);
+  });
 
   // Get value range.
   var min = 0;
@@ -336,14 +346,9 @@ function setConstraint(q_index, subq_index, value) {
   constraints[q_index][subq_index] = value;
   render();
   setTimeout(function() {
-    var el = document.getElementById(choiceId(q_index, subq_index, value));
+    var el = document.getElementById("q" + q_index);
     if (el) {
       el.scrollIntoView();
-    } else {
-      el = document.getElementById("q" + q_index);
-      if (el) {
-        el.scrollIntoView();
-      }
     }
   }, 100);
 
@@ -393,6 +398,9 @@ function _render() {
 
   // Render facets
   $("#total .count").html(totalResponseCount);
+  if (totalResponseCount != data.length) {
+    $("#percentage").html(parseInt(100 * totalResponseCount / data.length) + "% of all responses match these criteria.");
+  }
   $("#questions").html("");
   for (var i = 0; i < questions.length; i++) {
     var question = questions[i];
