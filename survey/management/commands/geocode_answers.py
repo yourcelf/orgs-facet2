@@ -73,6 +73,9 @@ query_substitution = {
     'New_Orleans': "city:New%20Orleans;state:LA",
     "Ames": "city:Ames;state:IA",
     "Berkeley": "city:Berkeley;state:CA",
+    "Mississippi": "state:MS",
+    "Sebastapol": "state:CA;city:Sebastapol",
+    "Treasury_Gardens": "city:Melbourne;country:Australia",
 }
 
 whitelist = {

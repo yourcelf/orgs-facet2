@@ -1,16 +1,17 @@
 // vim: set ts=2 sw=2 :
 var questions = null;
 var data = null;
-var geocodes = null;
 var constraints = {};
 var counts = {};
 var totalResponseCount = 0;
+var stateCodes = { AL: 1, AK: 1, AZ: 1, AR: 1, CA: 1, CO: 1, CT: 1, DE: 1, of: 1, FL: 1, GA: 1, HI: 1, ID: 1, IL: 1, IN: 1, IA: 1, KS: 1, KY: 1, LA: 1, ME: 1, MD: 1, MA: 1, MI: 1, MN: 1, MS: 1, MO: 1, MT: 1, NE: 1, NV: 1, NH: 1, NJ: 1, NM: 1, NY: 1, NC: 1, ND: 1, OH: 1, OK: 1, OR: 1, PA: 1, RI: 1, SC: 1, SD: 1, TN: 1, TX: 1, UT: 1, VT: 1, VA: 1, WA: 1, WV: 1, WI: 1, WY: 1, AS: 1, GU: 1, MP: 1, PR: 1, VI: 1, FM: 1, MH: 1, PW: 1, AA: 1, AE: 1, AP: 1};
+
 $.ajax({
   url: '../questions.json',
   type: 'GET',
   success: function(res) {
     questions = res;
-    if (questions && data && geocodes) {
+    if (questions && data) {
       render();
     }
   },
@@ -25,22 +26,7 @@ $.ajax({
   type: 'GET',
   success: function(res) {
     data = res;
-    if (questions && data && geocodes) {
-      render();
-    }
-  },
-  error: function() {
-    if (confirm("Error loading page.  Refresh?")) {
-      window.reload();
-    }
-  }
-});
-$.ajax({
-  url: '../geocodes.json',
-  type: 'GET',
-  success: function(res) {
-    geocodes = res;
-    if (questions && data && geocodes) {
+    if (questions && data) {
       render();
     }
   },
@@ -118,57 +104,118 @@ function renderMatrix(question, dest) {
   renderChoiceList(question, dest);
 }
 function renderGeo(question, dest) {
-  // HACK: only using first subquestion.  Get counts by value.
-  renderChoiceList(question, dest);
-  /*
-  var geocounts = {};
-  var chart_id = "q" + question.index + "_chart";
-  for (var i = 0; i < question.subquestions[0].choices.length; i++) {
-    geocounts[ question.subquestions[0].choices[i] ] = {
-      'count': counts[question.index][0][i],
-      'indexes': [question.index, 0, i]
-    }
-  }
+  // Assumes the question has *only one subquestion*.
 
+  var chart_id = "q" + question.index + "_chart";
   var container = $("<div/>");
   var iframe = $("<iframe style='border: none;' src='static/img/Blank_US_Map.svg' width='960px' height='600px' id='" + chart_id + "'></iframe>");
   container.append(iframe);
   dest.append(container);
-  var map = document.getElementById(chart_id).contentWindow.document;
-
-  var state_data = {};
-  var non_state_data = {};
-  for (var term in geocounts) {
-    if (geocodes[term] && geocodes[term].state) {
-      state_data[term] = geocounts[term];
-      state_data[term].state = geocodes[term].state;
+  var state_data = [];
+  var non_state_data = [];
+  for (var i=0; i < question.subquestions[0].choices.length; i++) {
+    var data = {
+      label: question.subquestions[0].choices[i],
+      count: counts[question.index][0][i],
+      indexes: [question.index, 0, i]
+    }
+    if (stateCodes[data.label] == 1) {
+      state_data.push(data);
     } else {
-      non_state_data[term] = geocounts[term];
+      non_state_data.push(data);
     }
   }
-  var max = 0;
+  var sortByCount = function(a, b) {
+    return a.count > b.count ? (-1) : b.count > a.count ? 1 : 0;
+  }
+  non_state_data.sort(sortByCount);
+
+  // Get value range.
   var min = 0;
-  for (var term in state_data) {
-    if (state_data[term].count > max) {
-      max = state_data[term].count;
+  var max = 0;
+  for (var i = 0; i < state_data.length; i++) {
+    if (state_data[i].count > max) {
+      if (state_data[i].label != "Not applicable") {
+        max = state_data[i].count;
+      }
     }
   }
-  console.log(min, max, state_data);
+  for (var i = 0; i < non_state_data.length; i++) {
+    if (non_state_data[i].count > max) {
+      if (non_state_data[i].label != "Not applicable") {
+        max = non_state_data[i].count;
+      }
+    }
+  }
+
   function colorize(val) {
+    if (val == 0) {
+      return "#D3D3D3";
+    }
     var scale = parseInt(Math.floor((val - min) / (max - min) * 200 + 50));
     return "rgb(0, " + scale + ", 0)";
   }
 
-  for (var term in state_data) {
-    (function(term) {
-      var state = state_data[term].state;
-      var count = state_data[term].count;
-      $("#" + state + ", #" + state + " path", map).css(
-        "fill", colorize(count)
-      );
-    })(term);
+  // Color the states.
+  $("#" + chart_id).load(function() {
+    var map = document.getElementById(chart_id).contentWindow.document;
+    var chartPos = $("#" + chart_id).position();
+    for (var i = 0; i < state_data.length; i++) {
+      (function(entry) {
+        var tooltip = $("<div/>").attr("class", "tooltip fade bottom in").html([
+            "<div class='tooltip-inner'>",
+              entry.label, ": ", entry.count, " responses (",
+              parseInt(100 * entry.count / totalResponseCount),
+              "% of matched responses)",
+            "</div></div>"
+        ].join(""));
+
+        var path = $("#" + entry.label + ", #" + entry.label + " path", map);
+        path.css({
+          fill: colorize(entry.count),
+          cursor: "pointer"
+        });
+        path.on("mouseover", function(e) {
+          $("body").append(tooltip);
+          var pos = path[0].getBoundingClientRect();
+          tooltip.css({
+            display: "block",
+            left: (chartPos.left + e.clientX) + "px",
+            top: (chartPos.top + e.clientY) + "px"
+          });
+        });
+        path.on("mouseout", function(event) {
+          tooltip.remove();
+        });
+        path.on("click", function(event) {
+          setConstraint(entry.indexes[0], entry.indexes[1], entry.indexes[2]);
+        });
+      })(state_data[i]);
+    }
+  });
+  // Color legend.
+  var legend = $("<div/>").css("text-align", "center").html("Legend: ");
+  var numSwatches = 5;
+  for (var i = 0; i <= numSwatches ; i++) {
+    var swatch = $("<span />") 
+    var number = parseInt(i * (max - min) / (numSwatches));
+    swatch.append(
+      $("<span class='swatch'></span>").css("background-color", colorize(number))
+    );
+    swatch.append(number + " ");
+    legend.append(swatch);
   }
-  */
+  dest.append(legend);
+  // Non-state values.
+  var nonStateEntries = $("<div/>").append("<h3>Other</h3>");
+  for (var term in non_state_data) {
+    var entry = non_state_data[term];
+    nonStateEntries.append(renderChoice(
+      entry.label, entry.indexes[0], entry.indexes[1], entry.indexes[2]
+    ));
+    nonStateEntries.append(" ");
+  }
+  dest.append(nonStateEntries);
 }
 function renderBarChart(question, dest) {
   var values = [];

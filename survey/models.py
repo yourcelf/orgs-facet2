@@ -25,10 +25,10 @@ class Answer(models.Model):
     respondent = models.ForeignKey(Respondent)
     question = models.ForeignKey(Question)
     answer = models.TextField(blank=True)
-    answer_row = models.IntegerField(default=0)
+    subquestion = models.IntegerField(default=0)
 
     class Meta:
-        ordering = ['question', 'answer_row']
+        ordering = ['question', 'subquestion']
 
     def __unicode__(self):
         return self.answer

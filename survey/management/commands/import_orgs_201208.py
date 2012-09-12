@@ -336,6 +336,7 @@ def clean_answer(q_col, val):
 
     return {
             "": "",
+            "(blank)": "",
             "no response": "",
             "999": "",
             "9999": "Not applicable",
@@ -368,7 +369,7 @@ def load_answers(filepath):
                                 respondent=respondent,
                                 question=question,
                                 answer=val,
-                                answer_row=c,
+                                subquestion=c,
                             )
         transaction.commit()
 
