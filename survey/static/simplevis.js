@@ -398,6 +398,7 @@ function _render() {
 
   // Render facets
   $("#total .count").html(totalResponseCount);
+  $("#percentage").html("");
   if (totalResponseCount != data.length) {
     $("#percentage").html(parseInt(100 * totalResponseCount / data.length) + "% of all responses match these criteria.");
   }
