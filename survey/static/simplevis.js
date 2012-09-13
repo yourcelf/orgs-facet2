@@ -350,7 +350,7 @@ function setConstraint(q_index, subq_index, value) {
   pushState();
   render();
   setTimeout(function() {
-    var el = document.getElementById("q" + q_index);
+    var el = document.getElementById("q" + questions[q_index].number);
     if (el) {
       el.scrollIntoView();
     }
@@ -494,8 +494,8 @@ function _render() {
     var question = questions[i];
     var qdiv = $("<div class='question'></div>");
     qdiv.append([
-        "<h2 id='q", question.index, "'>", question.question,
-        " <a class='anchor' name='q", question.index, "' href='#q", question.index, "'>&para;</a>",
+        "<h2 id='q", question.number, "'>", question.question,
+        " <a class='anchor' name='q", question.number, "' href='#q", question.number, "'>&para;</a>",
         "</h2>"].join(""));
     var adiv = $("<div class='answers'></div>");
     qdiv.append(adiv);
