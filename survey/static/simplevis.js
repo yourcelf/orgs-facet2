@@ -12,12 +12,13 @@ $.ajax({
   success: function(res) {
     questions = res;
     if (questions && data) {
+      pullState();
       render();
     }
   },
   error: function() {
     if (confirm("Error loading page.  Refresh?")) {
-      window.reload();
+      window.location.reload();
     }
   }
 });
@@ -27,12 +28,13 @@ $.ajax({
   success: function(res) {
     data = res;
     if (questions && data) {
+      pullState();
       render();
     }
   },
   error: function() {
     if (confirm("Error loading page.  Refresh?")) {
-      window.reload();
+      window.location.reload();
     }
   }
 });
@@ -49,7 +51,7 @@ function renderChoice(choice, q_index, subq_index, answer_index) {
 
   el.attr({
     id: choiceId(q_index, subq_index, answer_index),
-    "data-title": parseInt(100 * count / totalResponseCount) + "% of matched responses",
+    "data-title": (100 * count / totalResponseCount).toFixed(1) + "% of matched responses",
     "data-placement": "bottom"
   });
   el.tooltip();
@@ -175,7 +177,7 @@ function renderGeo(question, dest) {
         var tooltip = $("<div/>").attr("class", "tooltip fade bottom in").html([
             "<div class='tooltip-inner'>",
               entry.label, ": ", entry.count, " responses (",
-              parseInt(100 * entry.count / totalResponseCount),
+              (100 * entry.count / totalResponseCount).toFixed(1),
               "% of matched responses)",
             "</div></div>"
         ].join(""));
@@ -344,6 +346,7 @@ function setConstraint(q_index, subq_index, value) {
     constraints[q_index] = {};
   }
   constraints[q_index][subq_index] = value;
+  pushState();
   render();
   setTimeout(function() {
     var el = document.getElementById("q" + q_index);
@@ -351,12 +354,89 @@ function setConstraint(q_index, subq_index, value) {
       el.scrollIntoView();
     }
   }, 100);
-
 }
 function clearConstraint(q_index, subq_index) {
   delete constraints[q_index][subq_index];
+  pushState();
   render();
 }
+function getQueryVariable(variable) {
+  var query = window.location.search.substring(1);
+  var vars = query.split('&');
+  for (var i = 0; i < vars.length; i++) {
+    var pair = vars[i].split('=');
+    if (decodeURIComponent(pair[0]) == variable) {
+      return decodeURIComponent(pair[1]);
+    }
+  }
+}
+function pushState() {
+  var clist = [];
+  if (window.history && history.pushState) {
+    for (var q_index in constraints) {
+      for (var subq in constraints[q_index]) {
+        // Use question number (which will never change) rather than question
+        // index (which could change if we change which questions are
+        // displayed) for the URL.
+        clist.push([
+          questions[q_index].number, parseInt(subq), constraints[q_index][subq]
+        ]);
+      }
+    }
+    // Sort to avoid duplicate URLs.
+    clist.sort(function(a, b) {
+      if (a[0] > b[0]) {
+        return 1;
+      } else if (b[0] > a[0]) {
+        return -1;
+      } else if (a[1] > b[1]) {
+        return 1;
+      } else if (b[1] > a[1]) {
+        return -1;
+      } else if (a[2] > b[2]) {
+        return 1;
+      } else if (b[2] > a[2]) {
+        return -1;
+      } else {
+        return 0;
+      }
+    });
+    if (clist.length > 0) {
+      history.pushState(null, null, "?q=" + encodeURIComponent(JSON.stringify(clist)));
+    } else {
+      history.pushState(null, null, "/");
+    }
+  }
+}
+function pullState() {
+  constraints = {};
+  if (location.search && location.search.length > 1) {
+    var query = getQueryVariable("q");
+    if (query.length == 0) {
+      return;
+    }
+    var clist = JSON.parse(query);
+    for (var i = 0; i < clist.length; i++) {
+      // convert question number to question index.
+      for (var j = 0; j < questions.length; j++) {
+        if (questions[j].number == clist[i][0]) {
+          var q = questions[j].index;
+          if (constraints[q] == null) {
+            constraints[q] = {};
+          }
+          constraints[q][clist[i][1]] = clist[i][2];
+          break;
+        }
+      }
+    }
+  }
+}
+window.addEventListener("popstate", function() {
+  pullState();
+  render();
+});
+
+
 function render() {
   // Update counts
   $(".tooltip").remove();
@@ -400,7 +480,7 @@ function _render() {
   $("#total .count").html(totalResponseCount);
   $("#percentage").html("");
   if (totalResponseCount != data.length) {
-    $("#percentage").html(parseInt(100 * totalResponseCount / data.length) + "% of all responses match these criteria.");
+    $("#percentage").html((100 * totalResponseCount / data.length).toFixed(1) + "% of all responses match these criteria.");
   }
   $("#questions").html("");
   for (var i = 0; i < questions.length; i++) {
