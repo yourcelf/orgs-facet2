@@ -2,6 +2,7 @@
 var questions = null;
 var data = null;
 var constraints = {};
+var oldQueryVal = location.search;
 var counts = {};
 var totalResponseCount = 0;
 var stateCodes = { AL: 1, AK: 1, AZ: 1, AR: 1, CA: 1, CO: 1, CT: 1, DE: 1, of: 1, FL: 1, GA: 1, HI: 1, ID: 1, IL: 1, IN: 1, IA: 1, KS: 1, KY: 1, LA: 1, ME: 1, MD: 1, MA: 1, MI: 1, MN: 1, MS: 1, MO: 1, MT: 1, NE: 1, NV: 1, NH: 1, NJ: 1, NM: 1, NY: 1, NC: 1, ND: 1, OH: 1, OK: 1, OR: 1, PA: 1, RI: 1, SC: 1, SD: 1, TN: 1, TX: 1, UT: 1, VT: 1, VA: 1, WA: 1, WV: 1, WI: 1, WY: 1, AS: 1, GU: 1, MP: 1, PR: 1, VI: 1, FM: 1, MH: 1, PW: 1, AA: 1, AE: 1, AP: 1};
@@ -406,6 +407,7 @@ function pushState() {
     } else {
       history.pushState(null, null, "/");
     }
+    oldQueryVal = location.search;
   }
 }
 function pullState() {
@@ -432,8 +434,13 @@ function pullState() {
   }
 }
 window.addEventListener("popstate", function() {
-  pullState();
-  render();
+  setTimeout(function() {
+    if (oldQueryVal != location.search) {
+      pullState();
+      oldQueryVal = location.search;
+      render();
+    }
+  }, 1);
 });
 
 
@@ -486,7 +493,10 @@ function _render() {
   for (var i = 0; i < questions.length; i++) {
     var question = questions[i];
     var qdiv = $("<div class='question'></div>");
-    qdiv.append("<h2 id='q" + question.index + "'>" + question.question + "</h2>");
+    qdiv.append([
+        "<h2 id='q", question.index, "'>", question.question,
+        " <a class='anchor' name='q", question.index, "' href='#q", question.index, "'>&para;</a>",
+        "</h2>"].join(""));
     var adiv = $("<div class='answers'></div>");
     qdiv.append(adiv);
     $("#questions").append(qdiv);
