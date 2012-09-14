@@ -275,7 +275,6 @@ function renderGeo(question, dest) {
         });
         path.on("mouseover", function(e) {
           $("body").append(tooltip);
-          var pos = path[0].getBoundingClientRect();
           tooltip.css({
             display: "block",
             left: (chartPos.left + e.clientX) + "px",
@@ -382,13 +381,14 @@ function renderPie(question, dest) {
         dest.append(renderInlineCategory(question.subquestions[i].label));
       }
       var id = "q" + question.index + "_" + subq_index + "_plot";
-      var container = $("<div style='max-height: 264px;'>").attr("id", id);
+      var container = $("<div style='max-height: 264px; position: relative; clear: both;'>").attr("id", id);
       var values = [];
       var labels = []
       for (var j = 0; j < question.subquestions[subq_index].choices.length; j++) {
         var val = counts[question.index][subq_index][j]
         values.push(val);
-        labels.push(question.subquestions[subq_index].choices[j] + " (" + val + ")");
+
+        labels.push(question.subquestions[subq_index].choices[j] + ": " + val + " responses (" + (100 * val / totalResponseCount).toFixed(1) + "% of matched)");
       }
       dest.append(container);
       var r = Raphael(id);
@@ -398,7 +398,23 @@ function renderPie(question, dest) {
           legendpos: "east"
         }
       );
-      pie.hover(function() {
+      var tooltip;
+      pie.hover(function(e) {
+        container.css("cursor", "pointer");
+        tooltip = $("<div/>").attr("class", "tooltip fade bottom in").html([
+            "<div class='tooltip-inner'>",
+              this.label[1].attrs.text,
+              //(100 * entry.count / totalResponseCount).toFixed(1),
+              //"% of matched responses)",
+            "</div></div>"
+        ].join(""));
+        container.append(tooltip);
+        tooltip.css({
+          display: "block",
+          left: (this.sector.middle.x) + "px",
+          top: (this.sector.middle.y) + "px"
+        });
+
         this.sector.stop();
         this.sector.scale(1.1, 1.1, this.cs, this.cy);
         if (this.label) {
@@ -407,6 +423,8 @@ function renderPie(question, dest) {
           this.label[1].attr({ "font-weight": 800 });
         }
       }, function() {
+        tooltip.remove();
+        container.css("cursor", "auto");
         this.sector.animate({ transform: 's1 1 ' + this.cs + ' ' + this.cy }, 500, "bounce");
         if (this.label) {
           this.label[0].animate({ r: 5 }, 500, "bounce");

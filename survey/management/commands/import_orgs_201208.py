@@ -148,7 +148,7 @@ column_maps = {
     },
     'q0019': {
         'question': "Your gender (check all that apply)",
-        'widget': 'choice_list',
+        'widget': 'bar_chart',
         'rows': [
             'Female',
             'Male',
@@ -159,7 +159,7 @@ column_maps = {
     },
     'q0020': {
         'question': "Your sexual identity (check all that apply)",
-        'widget': 'choice_list',
+        'widget': 'bar_chart',
         'rows': [
             'Lesbian/Gay/Bisexual/Queer',
             'Heterosexual/Straight',
@@ -169,7 +169,7 @@ column_maps = {
     },
     'q0021': {
         'question': "What best describes your employment status during the last month?  (check all that apply)",
-        'widget': 'choice_list',
+        'widget': 'bar_chart',
         'rows': [
             "Student",
             "Employed full-time",
