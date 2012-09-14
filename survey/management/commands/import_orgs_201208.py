@@ -196,12 +196,12 @@ column_maps = {
     },
     'q0023': {
         'question': "What is your marital status?",
-        'widget': 'choice_list',
+        'widget': 'bar_chart',
         'rows': ['Choices', 'Other']
     },
     'q0024': {
         'question': "How many people do you support with your income?",
-        'widget': 'pie',
+        'widget': 'choice_list',
         'rows': ['Number of children under 18?', 'Number of adults you support?'],
     },
     'q0025': {
@@ -280,7 +280,7 @@ column_maps = {
     },
     'q0040': {
         'question': "Do you plan to vote in the 2012 presidential election? (check one)",
-        "widget": "choice_list",
+        "widget": "pie",
     },
     'q0041': {
         'question': "If you plan to vote, for whom do you expect to vote? (check one)",
