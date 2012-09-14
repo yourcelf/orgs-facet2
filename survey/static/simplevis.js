@@ -53,7 +53,8 @@ function renderChoice(choice, q_index, subq_index, answer_index) {
   el.attr({
     id: choiceId(q_index, subq_index, answer_index),
     "data-title": (100 * count / totalResponseCount).toFixed(1) + "% of matched responses",
-    "data-placement": "bottom"
+    "data-placement": "right",
+    "data-count": count
   });
   el.tooltip();
 
@@ -114,6 +115,32 @@ function renderChoiceList(question, dest) {
     }
   }
 }
+function renderTagCloud(question, dest) {
+  var container = $("<div/>");
+  dest.append(container);
+  renderChoiceList(question, container);
+  var minSize = 70;  // percent font-size
+  var maxSize = 200; // percent font-size
+  var elCounts = [];
+  var max = 0;
+  var min = 10000000000000000000;
+  $("[data-count]", container).each(function(i, el) {
+    var $el = $(el);
+    var count = parseInt($el.attr("data-count"));
+    elCounts.push([$el, count]);
+    if (count > max) { max = count; }
+    if (count < min) { min = count; }
+  });
+  console.log(min, max);
+  for (var i = 0; i < elCounts.length; i++) {
+    var el = elCounts[i][0];
+    var count = elCounts[i][1];
+    // Golf-ish tag cloud algorithm.
+    el.css("font-size",
+      (minSize+((max-(max-(count-min)))*(maxSize-minSize)/(max-min))) + "%"
+    );
+  }
+}
 function renderMatrix(question, dest) {
   //renderChoiceList(question, dest);
   renderStackedBar(question, dest);
@@ -168,7 +195,15 @@ function renderStackedBar(question, dest) {
   var legend = $("<div class='stacked-bar-legend'></div>");
   legend.append("Choices: ")
   for (var i = 0; i < sorted[0].choices.length; i++) {
-    legend.append($("<span class='label bar" + i + "'>" + sorted[0].choices[i].label + "</span>"));
+    (function(i) {
+      var legendLabel = $("<span class='label bar" + i + "'>" + sorted[0].choices[i].label + "</span>");
+      legendLabel.hover(function() {
+        $(".bar" + i, container).addClass("hover");
+      }, function() {
+        $(".bar" + i, container).removeClass("hover");
+      });
+      legend.append(legendLabel);
+    })(i);
   }
   dest.append(legend);
   dest.append(container);
@@ -381,7 +416,7 @@ function renderPie(question, dest) {
         dest.append(renderInlineCategory(question.subquestions[i].label));
       }
       var id = "q" + question.index + "_" + subq_index + "_plot";
-      var container = $("<div style='max-height: 264px; position: relative; clear: both;'>").attr("id", id);
+      var container = $("<div style='position: relative; clear: both;'>").attr("id", id);
       var values = [];
       var labels = []
       for (var j = 0; j < question.subquestions[subq_index].choices.length; j++) {
@@ -395,7 +430,8 @@ function renderPie(question, dest) {
       var pie = r.piechart(
         134, 134, 120, values, {
           legend: labels,
-          legendpos: "east"
+          legendpos: "east",
+          height: 264
         }
       );
       var tooltip;
@@ -617,6 +653,7 @@ function _render() {
       case 'matrix': renderMatrix(question, adiv); break;
       case 'geo': renderGeo(question, adiv); break;
       case 'choice_list': renderChoiceList(question, adiv); break;
+      case 'tag_cloud': renderTagCloud(question, adiv); break;
       case 'bar_chart': renderBarChart(question, adiv); break;
       case 'stacked_bar': renderStackedBar(question, adiv); break;
       case 'pie': renderPie(question, adiv); break;

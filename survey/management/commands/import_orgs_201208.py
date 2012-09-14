@@ -126,7 +126,7 @@ column_maps = {
     },
     'q0016': {
         'question': "If you participate in the Occupy movement, what TOP THREE concerns motivate you TO PARTICIPATE?  Please use single words if possible, and list them in order of importance.",
-        'widget': 'choice_list',
+        'widget': 'tag_cloud',
         'rows': [
             'first',
             'second',
@@ -135,7 +135,7 @@ column_maps = {
     },
     'q0017': {
         'question': "If you do not participate in the Occupy movement, what TOP THREE reasons explain why you HAVE NOT PARTICIPATED?  Please use single words if possible, and list them in order of importance.",
-        'widget': 'choice_list',
+        'widget': 'tag_cloud',
         'rows': [
             'first',
             'second',

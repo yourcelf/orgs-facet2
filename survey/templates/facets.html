@@ -81,13 +81,14 @@
             visibility: visible;
           }
           .stacked-bar {
-            border: 1px solid #eee;
           }
           .stacked-bar-holder {
             width: 100%;
             position: relative;
             height: 2em;
             clear: both;
+            margin-bottom: 0.5em;
+            border: 1px solid #eee;
           }
           .stacked-bar-holder .bar {
             display: inline-block;
@@ -97,13 +98,14 @@
             cursor: pointer;
             outline: 1px solid #ccc;
           }
-          .stacked-bar-holder .bar:hover {
+          .stacked-bar-holder .bar:hover, .bar.hover {
             -webkit-box-shadow: 0px 0px 5px #09f;
             -moz-box-shadow: 0px 0px 5px #09f;
             -ms-box-shadow: 0px 0px 5px #09f;
             -o-box-shadow: 0px 0px 5px #09f;
             box-shadow: 0px 0px 5px #09f;
             outline: none;
+            z-index: 1;
           }
           .stacked-bar-holder .bar.chosen {
             background-color: orange !important;
@@ -112,18 +114,21 @@
             pointer-events: none;
           }
           .stacked-bar-holder .bar-label {
+            white-space: nowrap;
             pointer-events: none;
             color: black;
             font-weight: bold;
             position: absolute;
             left: 0;
             top: 0;
-            z-index: 1;
+            z-index: 2;
             text-shadow: 0px 0px 1px white,0px 0px 1px white,0px 0px 1px white;
           }
           .stacked-bar-legend {
             clear: both;
             margin-bottom: 0.5em;
+            font-size: 80%;
+            text-shadow: none;
           }
           .stacked-bar-legend .label {
             color: black !important;
