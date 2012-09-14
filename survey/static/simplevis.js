@@ -115,7 +115,92 @@ function renderChoiceList(question, dest) {
   }
 }
 function renderMatrix(question, dest) {
-  renderChoiceList(question, dest);
+  //renderChoiceList(question, dest);
+  renderStackedBar(question, dest);
+}
+function renderStackedBar(question, dest) {
+  // Assumes all subquestions have the same possible values, and no more than
+  // stackedBarColors.length choices.
+
+  // Sort the options.
+  var choice_totals = {};
+  for (var i = 0; i < question.subquestions.length; i++) {
+    for (var j = 0; j < question.subquestions[i].choices.length; j++) {
+      var choice = question.subquestions[i].choices[j];
+      if (choice_totals[choice] == null) {
+        choice_totals[choice] = 0;
+      }
+      choice_totals[choice] += counts[question.index][i][j];
+    }
+  }
+
+  var sorted = [];
+  for (var i = 0; i < question.subquestions.length; i++) {
+    var opt = {
+      label: question.subquestions[i].label,
+      choices: [],
+      count: 0
+    };
+    for (var j = 0; j < question.subquestions[i].choices.length; j++) {
+      var count = counts[question.index][i][j];
+      opt.choices.push({
+        label: question.subquestions[i].choices[j],
+        count: count,
+        subq: i,
+        choice: j
+      });
+      opt.count += count
+    };
+    sorted.push(opt);
+  }
+  sorted.sort(function(a,b) {
+    return a.count > b.count ? (-1) : a.count < b.count ? (1) : 0;
+  });
+  for (var i = 0; i < sorted.length; i++) {
+    sorted[i].choices.sort(function(a, b) {
+      var a1 = choice_totals[a.label];
+      var b1 = choice_totals[b.label];
+      return a1 > b1 ? (-1) : a1 < b1 ? (1) : 0;
+    });
+  }
+
+  var container = $("<div class='stacked-bar'></div>");
+  var legend = $("<div class='stacked-bar-legend'></div>");
+  legend.append("Choices: ")
+  for (var i = 0; i < sorted[0].choices.length; i++) {
+    legend.append($("<span class='label bar" + i + "'>" + sorted[0].choices[i].label + "</span>"));
+  }
+  dest.append(legend);
+  dest.append(container);
+  for (var i = 0; i < sorted.length; i++) {
+    var subq = sorted[i];
+    var bar = $("<div class='stacked-bar-holder'></div>");
+    container.append(bar);
+    var bar_label = $("<span class='bar-label'>" + sorted[i].label + "</span>");
+    bar.append(bar_label);
+    for (var j = 0; j < sorted[i].choices.length; j++) {
+      (function(opt, order) {
+        var subbar = $("<div class='bar bar" + order + "'>&nbsp;</div>");
+        var width = 100 * opt.count / totalResponseCount;
+        if (width == 100) {
+          bar_label.append(": <i>" + opt.label + "</i>");
+        }
+        subbar.css("width", width + "%");
+        subbar.on("click", function() {
+          setConstraint(question.index, opt.subq, opt.choice);
+        });
+        subbar.tooltip({
+          placement: "right",
+          title: [
+            opt.label, ": ",
+            opt.count, " responses<br/>(",
+            width.toFixed(1) + "% of matched results)",
+          ].join("")
+        });
+        bar.append(subbar);
+      })(sorted[i].choices[j], j);
+    }
+  }
 }
 function renderGeo(question, dest) {
   // Assumes the question has *only one subquestion*.
@@ -293,6 +378,9 @@ function renderPie(question, dest) {
   }
   for (var i = 0; i < question.subquestions.length; i++) {
     (function(subq_index) {
+      if (question.subquestions.length > 1) {
+        dest.append(renderInlineCategory(question.subquestions[i].label));
+      }
       var id = "q" + question.index + "_" + subq_index + "_plot";
       var container = $("<div style='max-height: 264px;'>").attr("id", id);
       var values = [];
@@ -360,6 +448,12 @@ function clearConstraint(q_index, subq_index) {
   delete constraints[q_index][subq_index];
   pushState();
   render();
+  setTimeout(function() {
+    var el = document.getElementById("q" + questions[q_index].number);
+    if (el) {
+      el.scrollIntoView();
+    }
+  }, 100);
 }
 function getQueryVariable(variable) {
   var query = window.location.search.substring(1);
@@ -506,6 +600,7 @@ function _render() {
       case 'geo': renderGeo(question, adiv); break;
       case 'choice_list': renderChoiceList(question, adiv); break;
       case 'bar_chart': renderBarChart(question, adiv); break;
+      case 'stacked_bar': renderStackedBar(question, adiv); break;
       case 'pie': renderPie(question, adiv); break;
       default:
         console.error("Unknown widget: " + question.widget);

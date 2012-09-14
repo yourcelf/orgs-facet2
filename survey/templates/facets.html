@@ -80,6 +80,60 @@
           h2:hover > a.anchor {
             visibility: visible;
           }
+          .stacked-bar {
+            border: 1px solid #eee;
+          }
+          .stacked-bar-holder {
+            width: 100%;
+            position: relative;
+            height: 2em;
+            clear: both;
+          }
+          .stacked-bar-holder .bar {
+            display: inline-block;
+            float: left;
+            height: 100%;
+            position: relative;
+            cursor: pointer;
+            outline: 1px solid #ccc;
+          }
+          .stacked-bar-holder .bar:hover {
+            -webkit-box-shadow: 0px 0px 5px #09f;
+            -moz-box-shadow: 0px 0px 5px #09f;
+            -ms-box-shadow: 0px 0px 5px #09f;
+            -o-box-shadow: 0px 0px 5px #09f;
+            box-shadow: 0px 0px 5px #09f;
+            outline: none;
+          }
+          .stacked-bar-holder .bar.chosen {
+            background-color: orange !important;
+          }
+          .stacked-bar-holder .bar-label {
+            pointer-events: none;
+            color: black;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            top: 0;
+            z-index: 1;
+            text-shadow: 0px 0px 1px white,0px 0px 1px white,0px 0px 1px white;
+          }
+          .stacked-bar-legend {
+            clear: both;
+            margin-bottom: 0.5em;
+          }
+          .stacked-bar-legend .label {
+            color: black !important;
+            font-size: 100%;
+            margin-right: 0.5em;
+          }
+          .bar0 { background-color: #dfd; }
+          .bar1 { background-color: #ddf; }
+          .bar2 { background-color: #aba; }
+          .bar3 { background-color: #baa; }
+          .bar4 { background-color: #889; }
+          .bar5 { background-color: #000; }
+
         </style>
     </head>
     <body>

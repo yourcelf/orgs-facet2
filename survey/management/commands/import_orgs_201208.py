@@ -67,7 +67,7 @@ column_maps = {
     },
     'q0013': {
         'question': "Do you participate in any of the following",
-        'widget': 'matrix',
+        'widget': 'stacked_bar',
         'rows': [
             'Political Party',
             'Labor Union',
@@ -86,7 +86,7 @@ column_maps = {
     },
     'q0014': {
         'question': "Here are some different forms of political and social action people can take.  Please indicate, for each one, if you have done this:",
-        'widget': 'matrix',
+        'widget': 'stacked_bar',
         'rows': [
             'Signed a petition',
             'Boycotted, or deliberately bought, certain products for political, ethical, or environmental reasons',
@@ -101,15 +101,15 @@ column_maps = {
     },
     'q0015': {
         'question': "These are some sources that you might or might not use for news and information about the Occupy movement.  Please indicate whether you used these sources for news and information about the Occupy movement.",
-        'widget': 'matrix',
+        'widget': 'stacked_bar',
         'rows': [
             'Word of mouth',
             'Discussions at Occupy camps or face to face',
             #'groups',
-            'email',
-            'twitter',
-            'facebook',
-            'chat rooms / IRC',
+            'Email',
+            'Twitter',
+            'Facebook',
+            'Chat rooms / IRC',
             'YouTube',
             'Tumblr',
             'Blogs',
@@ -201,7 +201,7 @@ column_maps = {
     },
     'q0024': {
         'question': "How many people do you support with your income?",
-        'widget': 'matrix',
+        'widget': 'pie',
         'rows': ['Number of children under 18?', 'Number of adults you support?'],
     },
     'q0025': {
@@ -223,21 +223,21 @@ column_maps = {
         'question': "Describe your race or ethnicity.",
         'widget': 'choice_list',
     },
-    'q0031': {
-        'question': "Which political party do you identify with most closely?",
-        'rows': ["I do or don't associate", "Political party"],
-        'widget': 'matrix',
-    },
-    'q0032': {
-         'question': "Voting activity: Did you vote in your most recent nationwide election?",
-         'rows': ["Eligibility", "Voted for"],
-         'widget': 'matrix',
-     },
-    'q0033': {
-         'question': "Do you plan to vote in your next nationwide election?",
-         'rows': ['Intention to vote', "Voting for"],
-         'widget': 'matrix',
-     },
+#    'q0031': {
+#        'question': "Which political party do you identify with most closely?",
+#        'rows': ["I do or don't associate", "Political party"],
+#        'widget': 'matrix',
+#    },
+#    'q0032': {
+#         'question': "Voting activity: Did you vote in your most recent nationwide election?",
+#         'rows': ["Eligibility", "Voted for"],
+#         'widget': 'matrix',
+#     },
+#    'q0033': {
+#         'question': "Do you plan to vote in your next nationwide election?",
+#         'rows': ['Intention to vote', "Voting for"],
+#         'widget': 'matrix',
+#     },
     'q0034': {
          'question': "What is your five-digit zip code?",
          'widget': 'geo',
@@ -266,7 +266,7 @@ column_maps = {
      },
     'q0037': {
         'question': "What is the highest level of formal education that you have completed?",
-        "widget": "pie",
+        "widget": "choice_list",
     },
     'q0038': {
         'question': "Which of the following political parties do you identify with most closely?",
@@ -280,7 +280,7 @@ column_maps = {
     },
     'q0040': {
         'question': "Do you plan to vote in the 2012 presidential election? (check one)",
-        "widget": "pie",
+        "widget": "choice_list",
     },
     'q0041': {
         'question': "If you plan to vote, for whom do you expect to vote? (check one)",

@@ -20,7 +20,6 @@ def _get_question_choices():
     geo_states = _get_states()
 
     for q, question in enumerate(Question.objects.all()):
-
         choices = []
 
         if not question.rows:
