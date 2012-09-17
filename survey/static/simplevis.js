@@ -8,7 +8,7 @@ var totalResponseCount = 0;
 var stateCodes = { AL: 1, AK: 1, AZ: 1, AR: 1, CA: 1, CO: 1, CT: 1, DE: 1, of: 1, FL: 1, GA: 1, HI: 1, ID: 1, IL: 1, IN: 1, IA: 1, KS: 1, KY: 1, LA: 1, ME: 1, MD: 1, MA: 1, MI: 1, MN: 1, MS: 1, MO: 1, MT: 1, NE: 1, NV: 1, NH: 1, NJ: 1, NM: 1, NY: 1, NC: 1, ND: 1, OH: 1, OK: 1, OR: 1, PA: 1, RI: 1, SC: 1, SD: 1, TN: 1, TX: 1, UT: 1, VT: 1, VA: 1, WA: 1, WV: 1, WI: 1, WY: 1, AS: 1, GU: 1, MP: 1, PR: 1, VI: 1, FM: 1, MH: 1, PW: 1, AA: 1, AE: 1, AP: 1};
 
 $.ajax({
-  url: '../questions.json',
+  url: 'questions.json',
   type: 'GET',
   success: function(res) {
     questions = res;
@@ -24,7 +24,7 @@ $.ajax({
   }
 });
 $.ajax({
-  url: '../answers.json',
+  url: 'answers.json',
   type: 'GET',
   success: function(res) {
     data = res;
@@ -131,7 +131,6 @@ function renderTagCloud(question, dest) {
     if (count > max) { max = count; }
     if (count < min) { min = count; }
   });
-  console.log(min, max);
   for (var i = 0; i < elCounts.length; i++) {
     var el = elCounts[i][0];
     var count = elCounts[i][1];
@@ -521,46 +520,50 @@ function getQueryVariable(variable) {
 }
 function pushState() {
   var clist = [];
-  if (window.history && history.pushState) {
-    for (var q_index in constraints) {
-      for (var subq in constraints[q_index]) {
-        // Use question number (which will never change) rather than question
-        // index (which could change if we change which questions are
-        // displayed) for the URL.
-        clist.push([
-          questions[q_index].number, parseInt(subq), constraints[q_index][subq]
-        ]);
-      }
+  for (var q_index in constraints) {
+    for (var subq in constraints[q_index]) {
+      // Use question number (which will never change) rather than question
+      // index (which could change if we change which questions are
+      // displayed) for the URL.
+      clist.push([
+        questions[q_index].number, parseInt(subq), constraints[q_index][subq]
+      ]);
     }
-    // Sort to avoid duplicate URLs.
-    clist.sort(function(a, b) {
-      if (a[0] > b[0]) {
-        return 1;
-      } else if (b[0] > a[0]) {
-        return -1;
-      } else if (a[1] > b[1]) {
-        return 1;
-      } else if (b[1] > a[1]) {
-        return -1;
-      } else if (a[2] > b[2]) {
-        return 1;
-      } else if (b[2] > a[2]) {
-        return -1;
-      } else {
-        return 0;
-      }
-    });
-    if (clist.length > 0) {
-      history.pushState(null, null, "?q=" + encodeURIComponent(JSON.stringify(clist)));
+  }
+  // Sort to avoid duplicate URLs.
+  clist.sort(function(a, b) {
+    if (a[0] > b[0]) {
+      return 1;
+    } else if (b[0] > a[0]) {
+      return -1;
+    } else if (a[1] > b[1]) {
+      return 1;
+    } else if (b[1] > a[1]) {
+      return -1;
+    } else if (a[2] > b[2]) {
+      return 1;
+    } else if (b[2] > a[2]) {
+      return -1;
     } else {
-      history.pushState(null, null, "/");
+      return 0;
     }
+  });
+  var url;
+  if (clist.length > 0) {
+    url = "?q=" + encodeURIComponent(JSON.stringify(clist));
+  } else {
+    url = "/";
+  }
+  updateTweetButton(url);
+  if (window.history && history.pushState) {
+    history.pushState(null, null, url);
     oldQueryVal = location.search;
   }
 }
 function pullState() {
   constraints = {};
   if (location.search && location.search.length > 1) {
+    updateTweetButton(location.search);
     var query = getQueryVariable("q");
     if (query.length == 0) {
       return;
@@ -580,6 +583,14 @@ function pullState() {
       }
     }
   }
+}
+function updateTweetButton(url) {
+  $(".twitter-button").attr("href",
+    "https://twitter.com/home?status=" +
+    encodeURIComponent(
+      "#S17 #ORGS http://www.occupyresearch.net/orgs/" + (url == "/" ? "" : url)
+    )
+  );
 }
 window.addEventListener("popstate", function() {
   setTimeout(function() {

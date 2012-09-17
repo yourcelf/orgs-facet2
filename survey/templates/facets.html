@@ -142,6 +142,18 @@
           .bar4 { background-color: #889; }
           .bar5 { background-color: #000; }
 
+          .tweetie {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background-image: url("static/img/twitter_bird.png");
+            vertical-align: middle;
+          }
+          a:hover .tweetie {
+            background-image: url("static/img/twitter_bird-hover.png");
+          }
+
+
         </style>
     </head>
     <body>
@@ -149,13 +161,34 @@
         <div class='row-fluid'>
           <div class='span8'>
             <div class='well'>
-              <h1>Occupy Research General Survey</h1>
-              <h2>Facet browser</h2>
-              <p>
-              Drill down into the responses to the Occupy Research General
-              Survey by clicking on links.  Counts will update to reflect how
-              many responses meet those constraints.
-              </p>
+              <div class='row-fluid'>
+                <div class='span5'>
+                  <a href='http://www.occupyresearch.net/category/survey/'><img src='static/img/orgs_banner.png' alt='Occupy Research General Demographic and Participation Survey'/></a>
+                </div>
+                <div class='span7'>
+                  <h1>Occupy Research General&nbsp;Survey</h1>
+
+                  <h2>Facet browser</h2>
+                  <p>
+                  Drill down into the responses to the
+                  <a href='http://www.occupyresearch.net/category/survey/'>Occupy Research General Survey</a>
+                  by clicking on links.  Counts will update to reflect how many
+                  responses meet those constraints.  Click as many facets as you'd
+                  like.</p>
+                  <div style='clear: both;'></div>
+                  <p>For example, you might like to know about the survey responses of
+                  occupiers who
+                  <a href="?q=[[9%2C0%2C3]%2C[34%2C0%2C25]]">are from California, and have been to a camp "many times"</a>.
+                  Or responses from people who
+                  <a href="?q=[[10%2C1%2C0]%2C[11%2C4%2C0]]">donated money, food, or goods, and also attended a general assembly</a>.
+                  </p>
+                  <p>
+                  Find interesting results?
+                  <a class="twitter-button" href="https://twitter.com/home?status=%23S17%20%23ORGS%20http%3A%2F%2Fwww.occupyresearch.net%2Forgs%2F"><i class='tweetie'></i><span class='tweet-text'>Tweet them</span></a>,
+                  hashtag #ORGS!
+                  </p>
+                </div>
+              </div>
             </div>
             <div id='questions'></div>
           </div>
