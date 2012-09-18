@@ -588,7 +588,7 @@ function updateTweetButton(url) {
   $(".twitter-button").attr("href",
     "https://twitter.com/home?status=" +
     encodeURIComponent(
-      "#S17 #ORGS http://www.occupyresearch.net/orgs/" + (url == "/" ? "" : url)
+      "#ows #OccupyResearch http://www.occupyresearch.net/orgs/" + (url == "/" ? "" : url)
     )
   );
 }
