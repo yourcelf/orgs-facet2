@@ -7,3 +7,4 @@ pip-log.txt
 *.mo
 CACHE
 _build
+data
